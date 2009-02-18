@@ -18,5 +18,13 @@ describe "CurbOpenuri" do
       CurlAgent.should_not_receive(:open)
       open('/dev/null') {|f| }
     end
+
+    it 'shall still call open where the object supports it' do
+      mock = mock('openable')
+      mock.stub!(:respond_to?).with(:open).and_return(true)
+      mock.should_receive(:open)
+      CurlAgent.should_not_receive(:open)
+      open(mock)
+    end
   end
 end

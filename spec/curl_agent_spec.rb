@@ -3,7 +3,7 @@ require File.dirname(__FILE__) + '/spec_helper'
 describe "CurlAgent" do
 
   describe 'new method' do
-    it 'shall permit to override user-agent' do
+    it 'shall permit to override user-agent later' do
       curl = CurlAgent.new('http://www.example.com/')
       curl.headers['User-Agent'].should_not be_nil
       curl.headers['User-Agent'] = 'curl'
@@ -65,7 +65,7 @@ EOF
       @curl = mock('curl')
       @curl.stub!(:headers).and_return(@headers)
       @curl.stub!(:perform!)
-      @curl.stub!(:body_str).and_return('')
+      @curl.stub!(:body_str).and_return('test')
       CurlAgent.should_receive(:new).and_return(@curl)
     end
 
@@ -80,5 +80,16 @@ EOF
       CurlAgent.open('http://www.example.com/', :timeout => 10)
     end
 
+    it 'shall use block when provided' do
+      CurlAgent.open('http://www.example.com/') {|f| f.read}.should == 'test'
+    end
+
+  end
+
+  describe 'when parsing parameters to open' do
+    it 'shall recognize wrong mode' do
+      CurlAgent.should_not_receive(:new)
+      lambda {CurlAgent.open('http://www.example.com/', 'w', 0600, :timeout=>10)}.should raise_error(ArgumentError)
+    end
   end
 end
