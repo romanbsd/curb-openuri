@@ -1,5 +1,9 @@
-curb-openuri============
-Description goes here.
+curb-openuri
+============
+
+This gem is a drop-in replacement for the stock 'open-uri' library.
+It overloads the Kernel#open and uses curb (ruby binding for libcurl)
+to do actual fetching of pages.
 
 COPYRIGHT
 =========

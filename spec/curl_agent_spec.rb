@@ -14,13 +14,14 @@ describe "CurlAgent" do
   describe 'when used alone' do
     before(:each) do
       @mock = mock('curl_easy')
-      @headers = {'Content-Type' => 'foo'}
+      @headers = {'User-Agent' => 'foo'}
       @mock.stub!(:headers).and_return(@headers)
       @mock.stub!(:'follow_location=')
       @mock.stub!(:'max_redirects=')
       @mock.stub!(:'enable_cookies=')
       @mock.stub!(:'connect_timeout=')
       @mock.stub!(:'timeout=')
+      @mock.should_receive(:perform)
       Curl::Easy.should_receive(:new).and_return(@mock)
     end
 
@@ -38,8 +39,23 @@ describe "CurlAgent" do
 
     it 'should return empty str for empty charset' do
       @mock.stub!(:content_type).and_return('Content-Type: text/html')
+      @mock.should_receive(:body_str).once
       curl = CurlAgent.new('http://www.example.com/')
       curl.charset.should == ''
+    end
+
+    it 'should attempt to find charset in html' do
+      @mock.stub!(:content_type).and_return('Content-Type: text/html')
+      @mock.stub!(:body_str).and_return(<<EOF)
+      <html>
+      <head>
+      <meta content="text/html; charset=ISO-8859-1" http-equiv="Content-Type"/>
+      </head>
+      <body></body>
+      </html>
+EOF
+      curl = CurlAgent.new('http://www.example.com/')
+      curl.charset.should == 'iso-8859-1'
     end
   end
 
@@ -48,7 +64,7 @@ describe "CurlAgent" do
       @headers = {'User-Agent'=>'foo'}
       @curl = mock('curl')
       @curl.stub!(:headers).and_return(@headers)
-      @curl.stub!(:perform).and_return('')
+      @curl.stub!(:perform!)
       @curl.stub!(:body_str).and_return('')
       CurlAgent.should_receive(:new).and_return(@curl)
     end

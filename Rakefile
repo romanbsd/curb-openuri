@@ -4,10 +4,10 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |s|
     s.name = "curb-openuri"
-    s.summary = %Q{openuri drop-in replacement that uses curb}
+    s.summary = %Q{open-uri drop-in replacement that uses curb}
     s.email = 'romanbsd@yahoo.com'
     s.homepage = "http://github.com/romanbsd/curb-openuri"
-    s.description = "TODO"
+    s.description = s.summary
     s.authors = ["Roman Shterenzon"]
     s.add_dependency('curb', '>=0.1.4')
   end
