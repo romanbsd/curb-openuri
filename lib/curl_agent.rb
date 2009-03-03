@@ -3,7 +3,8 @@ require 'stringio'
 require 'curb'
 
 class CurlAgent
-  def initialize(url)
+  # See CurlAgent::open for explanation about options
+  def initialize(url, options = {})
     @curl = Curl::Easy.new(url)
     # Defaults
     @curl.headers['User-Agent'] = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.6) Gecko/2009011913 Firefox/3.0.6'
@@ -13,6 +14,17 @@ class CurlAgent
     @curl.connect_timeout = 5
     @curl.timeout = 30
     @performed = false
+
+    options ||= {}
+    options.each {|k, v|
+      # Strings will be passed as headers, as in original open-uri
+      next unless k.is_a? Symbol
+      @curl.send("#{k}=".intern, v)
+      options.delete(k)
+    }
+
+    # All that's left should be considered headers
+    @curl.headers.merge!(options)
   end
 
   # Do the actual fetch, after which it's possible to call body_str method
@@ -61,17 +73,7 @@ class CurlAgent
       raise ArgumentError.new("invalid access mode #{mode} (resource is read only.)")
     end
 
-    agent = CurlAgent.new(name)
-
-    options ||= {}
-    options.each {|k, v|
-      # Strings will be passed as headers, as in original open-uri
-      next unless k.is_a? Symbol
-      agent.send("#{k}=".intern, v)
-      options.delete(k)
-    }
-    # All that's left should be considered headers
-    agent.headers.merge!(options)
+    agent = CurlAgent.new(name, options)
 
     agent.perform!
     io = StringIO.new(agent.body_str)
