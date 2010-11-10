@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'stringio'
 require 'curb'
+require 'uri'
 
 class CurlAgent
   # See CurlAgent::open for explanation about options
