@@ -76,7 +76,9 @@ class CurlAgent
     agent = CurlAgent.new(name, options)
 
     agent.perform!
-    io = StringIO.new(agent.body_str)
+    io = IO.new(agent.body_str, agent.header_str)
+    io.base_uri = URI.parse(agent.last_effective_url) rescue nil
+    io.status = [agent.response_code, '']
     if block
       block.call(io)
     else
@@ -92,5 +94,33 @@ class CurlAgent
       end
     end
     return mode, perm, rest
+  end
+
+  class IO < StringIO
+    # returns an Array which consists status code and message.
+    attr_accessor :status
+
+    # returns a URI which is base of relative URIs in the data.
+    # It may differ from the URI supplied by a user because redirection.
+    attr_accessor :base_uri
+
+    def initialize(body_str, header_str)
+      super(body_str)
+      @header_str = header_str
+    end
+
+    # returns a Hash which represents header fields.
+    # The Hash keys are downcased for canonicalization.
+    def meta
+      @meta ||= begin
+        arr = @header_str.split(/\r?\n/)
+        arr.shift
+        arr.inject({}) do |hash, hdr|
+          key, val = hdr.split(/:\s+/, 2)
+          hash[key.downcase] = val
+          hash
+        end
+      end
+    end
   end
 end

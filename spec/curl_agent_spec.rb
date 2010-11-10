@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/spec_helper'
+require 'uri'
 
 describe "CurlAgent" do
 
@@ -62,6 +63,7 @@ EOF
   describe 'when used with open' do
     before(:each) do
       @headers = {'User-Agent'=>'foo'}
+      @url = 'http://www.example.com/'
       @curl_easy = mock('curl_easy')
       Curl::Easy.should_receive(:new).and_return(@curl_easy)
       @curl_easy.stub!(:headers).and_return(@headers)
@@ -72,23 +74,41 @@ EOF
       @curl_easy.stub!(:timeout=)
       @curl_easy.stub!(:perform)
       @curl_easy.stub!(:body_str).and_return('test')
+      @curl_easy.stub!(:response_code).and_return(200)
+      @curl_easy.stub!(:last_effective_url).and_return(@url)
+      @curl_easy.stub!(:header_str).and_return("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nServer: Apache")
     end
 
     it 'shall permit to specify user-agent' do
       @curl_easy.headers['User-Agent'].should_not == 'curl'
-      CurlAgent.open('http://www.example.com/', 'User-Agent'=>'curl')
+      CurlAgent.open(@url, 'User-Agent'=>'curl')
       @curl_easy.headers['User-Agent'].should == 'curl'
     end
 
     it 'shall permit to override timeout' do
       @curl_easy.should_receive(:'timeout=').once.with(10)
-      CurlAgent.open('http://www.example.com/', :timeout => 10)
+      CurlAgent.open(@url, :timeout => 10)
     end
 
     it 'shall use block when provided' do
-      CurlAgent.open('http://www.example.com/') {|f| f.read}.should == 'test'
+      CurlAgent.open(@url) {|f| f.read}.should == 'test'
     end
 
+    it 'shall return io object which responds to base_uri' do
+      io = CurlAgent.open(@url)
+      io.should respond_to(:base_uri)
+      io.base_uri.should be_a_kind_of(URI)
+      io.base_uri.to_s.should == @url
+    end
+
+    it 'shall return io object which responds to meta' do
+      io = CurlAgent.open(@url)
+      io.should respond_to(:meta)
+      meta = io.meta
+      meta.should be_a_kind_of(Hash)
+      meta.should have(2).keys
+      meta['server'].should == 'Apache'
+    end
   end
 
   describe 'when parsing parameters to open' do
