@@ -13,7 +13,10 @@ begin
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
-  puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
+  desc 'Jeweler not available'
+  task :jeweler do
+    puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
+  end
 end
 
 require 'rake/rdoctask'
